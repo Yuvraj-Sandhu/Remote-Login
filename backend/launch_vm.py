@@ -1,21 +1,22 @@
 import oci
 import json
 
-def launch_instance():
-    with open("config.json") as f:
-        cfg = json.load(f)
+with open("config.json") as f:
+    cfg = json.load(f)
 
-    oci_config = oci.config.from_file()
+oci_config = oci.config.from_file()
 
-    compute = oci.core.ComputeClient(oci_config)
-    network = oci.core.VirtualNetworkClient(oci_config)
+compute = oci.core.ComputeClient(oci_config)
+network = oci.core.VirtualNetworkClient(oci_config)
 
+def launch_instance(session_id:str):
+    
     with open(cfg["ssh_key_path"]) as f:
         ssh_key = f.read()
 
     launch_details = oci.core.models.LaunchInstanceDetails(
         compartment_id=cfg["compartment_id"],
-        display_name="session-instance",
+        display_name=f"session-{session_id[:8]}",
         availability_domain=cfg["availability_domain"],
         shape=cfg["shape"],
         metadata={
@@ -26,27 +27,43 @@ def launch_instance():
             image_id=cfg["image_id"],
             boot_volume_size_in_gbs=50
         ),
-        create_vnic_details=oci.core.models.CreateVnicDetails(
-            assign_public_ip=True,
-            subnet_id=cfg["subnet_id"],
-            display_name="session-vnic",
-            skip_source_dest_check=False
-        )
+        subnet_id=cfg["subnet_id"],
+        is_pv_encryption_in_transit_enabled=True,
+        freeform_tags={"session_id": session_id}
     )
 
-    response = compute.launch_instance(launch_details)
-    instance=response.data
+    instance = compute.launch_instance(launch_details)
 
-    waiter = oci.wait_until(
+    instance = oci.wait_until(
         compute,
-        compute.get_instance(instance.id),
+        compute.get_instance(instance.data.id),
         'lifecycle_state',
         'RUNNING',
-        max_interval_seconds=300
-    )
+        max_wait_seconds=300
+    ).data
 
-    vnic_attachments = compute.list_vnic_attachments(compartment_id=cfg["compartment_id"], instance_id=instance.id)
-    vnic_id = vnic_attachments.data[0].vnic_id
+    vnic_attachments = compute.list_vnic_attachments(
+        compartment_id=cfg["compartment_id"], 
+        instance_id=instance.id
+    ).data
+
+    vnic_id = vnic_attachments[0].vnic_id
     vnic = network.get_vnic(vnic_id).data
     
     return vnic.public_ip
+
+def terminate_instance(session_id:str):
+    instances = compute.list_instances(
+        compartment_id=cfg["compartment_id"],
+        display_name=None
+    ).data
+
+    for instance in instances:
+        if instance.lifecycle_state.upper() != "TERMINATED":
+            inst = compute.get_instance(instance_id=instance.id).data
+            tags = inst.freeform_tags
+            if tags.get("session_id") == session_id:
+                compute.terminate_instance(instance_id=instance.id)
+                return
+    
+    raise Exception(f"No running instances found for session id: {session_id}")
