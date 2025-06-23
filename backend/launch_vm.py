@@ -1,5 +1,6 @@
 import oci
 import json
+from base64 import b64encode
 
 with open("config.json") as f:
     cfg = json.load(f)
@@ -14,13 +15,47 @@ def launch_instance(session_id:str):
     with open(cfg["ssh_key_path"]) as f:
         ssh_key = f.read()
 
+    startup_script = """#!/bin/bash
+    sudo iptables -F
+    sudo iptables -X
+    sudo iptables -t nat -F
+    sudo iptables -t nat -X
+    sudo iptables -t mangle -F
+    sudo iptables -t mangle -X
+    sudo iptables -P INPUT ACCEPT
+    sudo iptables -P FORWARD ACCEPT
+    sudo iptables -P OUTPUT ACCEPT
+
+    # Start virtual display :0 using Xvfb
+    Xvfb :1 -screen 0 1280x720x24 &
+
+    # Wait for Xvfb to start
+    sleep 2
+
+    # Start LXDE session with DISPLAY=:1
+    env DISPLAY=:1 startlxde &
+
+    # Automatically starting google chrome
+    env DISPLAY=:1 google-chrome --no-sandbox --disable-gpu --disable-software-rasterizer &
+
+
+    # Start x11vnc server with DISPLAY=:1
+    env DISPLAY=:1 x11vnc -display :1 -forever -nopw &
+
+    cd /home/ubuntu/noVNC-master
+    ./utils/novnc_proxy --vnc 127.0.0.1:5900 --listen 0.0.0.0:6080 &
+    """
+
+    user_data_encoded = b64encode(startup_script.encode()).decode()
+
     launch_details = oci.core.models.LaunchInstanceDetails(
         compartment_id=cfg["compartment_id"],
         display_name=f"session-{session_id[:8]}",
         availability_domain=cfg["availability_domain"],
         shape=cfg["shape"],
         metadata={
-            "ssh_authorized_keys":ssh_key
+            "ssh_authorized_keys":ssh_key,
+            "user_data": user_data_encoded
         },
         source_details=oci.core.models.InstanceSourceViaImageDetails(
             source_type="image",
