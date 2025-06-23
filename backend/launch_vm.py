@@ -33,11 +33,13 @@ def launch_instance(session_id:str):
     sleep 2
 
     # Start LXDE session with DISPLAY=:1
-    env DISPLAY=:1 startlxde &
+    env DISPLAY=:1 lxsession &
 
     # Automatically starting google chrome
     env DISPLAY=:1 google-chrome --no-sandbox --disable-gpu --disable-software-rasterizer &
 
+    cp /usr/share/applications/google-chrome.desktop /home/ubuntu/Desktop/
+    chmod +x /home/ubuntu/Desktop/google-chrome.desktop
 
     # Start x11vnc server with DISPLAY=:1
     env DISPLAY=:1 x11vnc -display :1 -forever -nopw &

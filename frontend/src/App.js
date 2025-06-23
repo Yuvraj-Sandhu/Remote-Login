@@ -52,8 +52,8 @@ function App() {
           <iframe
             src={`http://${vmIP}:6080/vnc.html`}
             title="Remote Desktop"
-            width="80%"
-            height="600"
+            width="150%"
+            height="750"
           />
         </div>
       )}
