@@ -33,19 +33,68 @@ def launch_instance(session_id:str):
     sleep 2
 
     # Start LXDE session with DISPLAY=:1
-    env DISPLAY=:1 lxsession &
+    env DISPLAY=:1 openbox &
 
-    # Automatically starting google chrome
-    env DISPLAY=:1 google-chrome --no-sandbox --disable-gpu --disable-software-rasterizer &
+    # Wait for lxde to start
+    sleep 3
+
+    # Ensure Desktop directory exists
+    mkdir -p /home/ubuntu/Desktop
 
     cp /usr/share/applications/google-chrome.desktop /home/ubuntu/Desktop/
     chmod +x /home/ubuntu/Desktop/google-chrome.desktop
+
+    sudo chown -R ubuntu:ubuntu /home/ubuntu/chrome-profile
+
+    # Automatically starting google chrome
+    env DISPLAY=:1 google-chrome \
+    --no-sandbox \
+    --disable-dev-shm-usage \
+    --disable-gpu \
+    --disable-software-rasterizer \
+    --disable-background-timer-throttling \
+    --disable-renderer-backgrounding \
+    --disable-backgrounding-occluded-windows \
+    --disable-features=TranslateUI,VizDisplayCompositor \
+    --disable-ipc-flooding-protection \
+    --disable-web-security \
+    --disable-features=VizDisplayCompositor \
+    --disable-threaded-animation \
+    --disable-threaded-scrolling \
+    --disable-checker-imaging \
+    --disable-new-bookmark-apps \
+    --disable-background-downloads \
+    --disable-background-networking \
+    --disable-client-side-phishing-detection \
+    --disable-default-apps \
+    --disable-extensions \
+    --disable-hang-monitor \
+    --disable-plugins \
+    --disable-popup-blocking \
+    --disable-prompt-on-repost \
+    --disable-sync \
+    --disable-translate \
+    --disable-web-resources \
+    --memory-pressure-off \
+    --max_old_space_size=256 \
+    --no-first-run \
+    --no-default-browser-check \
+    --password-store=basic \
+    --remote-debugging-port=9222 \
+    --window-size=1280,720 \
+    --user-data-dir=/home/ubuntu/chrome-profile &
+
+    sudo chown -R ubuntu:ubuntu /home/ubuntu/chrome-profile
 
     # Start x11vnc server with DISPLAY=:1
     env DISPLAY=:1 x11vnc -display :1 -forever -nopw &
 
     cd /home/ubuntu/noVNC-master
     ./utils/novnc_proxy --vnc 127.0.0.1:5900 --listen 0.0.0.0:6080 &
+
+    export PATH=$PATH:/home/ubuntu/.local/bin
+    export PYTHONPATH=$PYTHONPATH:/home/ubuntu/.local/lib/python3.10/site-packages
+    nohup uvicorn /home/ubuntu/fetch_cookies:app --host 0.0.0.0 --port 8080 > /home/ubuntu/cookie_api.log 2>&1 &
     """
 
     user_data_encoded = b64encode(startup_script.encode()).decode()
