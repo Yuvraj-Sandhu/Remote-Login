@@ -69,25 +69,44 @@ function App() {
       <h1>Remote-Login</h1>
       <div className="buttons">
         <button onClick={startSession} disabled={loading || sessionId}>
-          Start Session
+          <span className="shadow"></span>
+          <span className="edge"></span>
+          <span className="front text">Start Session</span>
         </button>
         <button onClick={stopSession} disabled={loading || !sessionId}>
-          Stop Session
+          <span className="shadow"></span>
+          <span className="edge"></span>
+          <span className="front text">Stop Session</span>
         </button>
       </div>
-      { vmIP && (
+      { vmIP &&(
         <>
-          <div className="cookie-form">
-            <input
-              type="text"
-              value={targetDomain}
-              onChange={(e) => setTargetDomain(e.target.value)}
-              placeholder="Enter target domain (e.g. reddit.com)"
-            />
-            <button onClick={extractCookies}>Extract Cookies</button>
-            {cookies && (
-              <button onClick={downloadCookies}>Download Cookies</button>
-            )}
+          <div className="cookie-form-container">
+            <div className="cookie-form">
+              <div className="coolinput">
+                <label for="input" className="text">Domain:</label>
+                <input 
+                  type="text"
+                  value={targetDomain}
+                  onChange={(e) => setTargetDomain(e.target.value)}
+                  placeholder="e.g. reddit.com" 
+                  name="input" 
+                  className="input"
+                />
+              </div>
+              <button onClick={extractCookies}>
+                <span className="shadow"></span>
+                <span className="edge"></span>
+                <span className="front text">Extract Cookies</span>
+              </button>
+              { cookies &&(
+                <button onClick={downloadCookies}>
+                  <span className="shadow"></span>
+                  <span className="edge"></span>
+                  <span className="front text">Download Cookies</span>
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="iframe-container">
