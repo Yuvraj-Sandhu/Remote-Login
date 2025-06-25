@@ -89,12 +89,14 @@ def launch_instance(session_id:str):
     # Start x11vnc server with DISPLAY=:1
     env DISPLAY=:1 x11vnc -display :1 -forever -nopw &
 
+    sleep 5
     cd /home/ubuntu/noVNC-master
     ./utils/novnc_proxy --vnc 127.0.0.1:5900 --listen 0.0.0.0:6080 &
 
+    cd /home/ubuntu
     export PATH=$PATH:/home/ubuntu/.local/bin
     export PYTHONPATH=$PYTHONPATH:/home/ubuntu/.local/lib/python3.10/site-packages
-    nohup uvicorn /home/ubuntu/fetch_cookies:app --host 0.0.0.0 --port 8080 > /home/ubuntu/cookie_api.log 2>&1 &
+    nohup uvicorn fetch_cookies:app --host 0.0.0.0 --port 8080 > /home/ubuntu/cookie.log 2>&1 &
     """
 
     user_data_encoded = b64encode(startup_script.encode()).decode()
