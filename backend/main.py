@@ -27,12 +27,12 @@ def wait_for_port(host, port, timeout=60):
             time.sleep(2)
     return False
 
-def wait_for_vnc_ready(ip, timeout=90):
+def wait_for_vnc_ready(ip, timeout=60):
     url = f"http://{ip}:6080/vnc.html"
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
-            response = requests.get(url, timeout=5)
+            response = requests.get(url, timeout=10)
             if response.status_code == 200:
                 return True
         except requests.exceptions.RequestException:
@@ -47,8 +47,9 @@ def create_session():
         public_ip = launch_vm.launch_instance(session_id)
         session_ip_map[session_id] = public_ip
 
-        is_port_ready = wait_for_port(public_ip, 6080, timeout=180)
-        is_vnc_ready = wait_for_vnc_ready(public_ip,timeout=180)
+        #is_port_ready = wait_for_port(public_ip, 6080, timeout=300)
+        is_port_ready = True
+        is_vnc_ready = wait_for_vnc_ready(public_ip,timeout=300)
         if not is_port_ready:
             raise HTTPException(status_code=504, detail="VM launched but port did not become ready in time.")
         if not is_vnc_ready:
@@ -65,5 +66,24 @@ def terminate_session(session_id:str):
         launch_vm.terminate_instance(session_id)
         session_ip_map.pop(session_id, None)
         return {"message": f"Session {session_id} terminated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/extract_cookies")
+def extract_cookies(ip: str, domain: str):
+    try:
+        url = f"http://{ip}:8080/fetch_cookies?domain={domain}"
+        response = requests.get(url,timeout=15)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="VM responded with error while fetching cookies.")
+        
+        cookies = response.json().get("cookies")
+        if not cookies:
+            raise HTTPException(status_code=500, detail="No cookies found in response.")
+        
+        return {"cookies": cookies}
+    
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=504, detail=f"Failed to connect to VM: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -33,18 +33,21 @@ def launch_instance(session_id:str):
     sleep 2
 
     # Start LXDE session with DISPLAY=:1
-    env DISPLAY=:1 openbox &
+    env DISPLAY=:1 startlxde &
 
     # Wait for lxde to start
-    sleep 3
+    sleep 5
 
     # Ensure Desktop directory exists
     mkdir -p /home/ubuntu/Desktop
 
     cp /usr/share/applications/google-chrome.desktop /home/ubuntu/Desktop/
     chmod +x /home/ubuntu/Desktop/google-chrome.desktop
-
+    chown ubuntu:ubuntu /home/ubuntu/Desktop/google-chrome.deskto
     sudo chown -R ubuntu:ubuntu /home/ubuntu/chrome-profile
+
+    # Clear Chrome profile to start fresh
+    rm -rf /home/ubuntu/chrome-profile/*
 
     # Automatically starting google chrome
     env DISPLAY=:1 google-chrome \
@@ -76,7 +79,6 @@ def launch_instance(session_id:str):
     --disable-translate \
     --disable-web-resources \
     --memory-pressure-off \
-    --max_old_space_size=256 \
     --no-first-run \
     --no-default-browser-check \
     --password-store=basic \
