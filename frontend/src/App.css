@@ -230,6 +230,18 @@ button:disabled {
   outline: none;
 }
 
+.session-info {
+  color: white;
+  text-align: left;
+  font-size: 1.1rem;
+}
+
+.session-info strong {
+  color: rgba(0,165,207);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
 .warning-text {
   color: red;
 }
@@ -238,4 +250,48 @@ button:disabled {
   display: flex;
   margin-top: 30px;
   justify-content: center;
+}
+
+.past-cookie-form-container {
+  display: flex;
+  justify-content: center;
+}
+
+.past-cookie-form {
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(0,60,80);
+  width: fit-content;
+  margin: 15px;
+  margin-top: 75px;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 5px 10px 30px rgba(0,35,50,0.5);
+  gap: 30px;
+}
+
+.past-cookie-form h3 {
+  color: rgba(0,165,207);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 10px;
+  margin-bottom: 0px;
+}
+
+.past-cookie-form button {
+  width: auto;
+  min-width: 120px;
+  align-self: center;
+  scale: 1.1;
+}
+
+.download-past {
+  color: rgba(0,165,207);
+  margin-top: -20px;
+}
+
+.download-past p {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 30px;
 }

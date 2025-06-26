@@ -9,6 +9,10 @@ function App() {
   const [targetDomain, setTargetDomain] = useState('');
   const [cookies, setCookies] = useState(null);
   const [loadingText, setLoadingText] = useState('Starting up VM...');
+  const [accessToken, setAccessToken] = useState(null);
+  const [pastSessionId, setPastSessionId] = useState('');
+  const [pastAccessToken, setPastAccessToken] = useState('');
+
 
   useEffect(() => {
     if (loading && !vmIP) {
@@ -58,6 +62,7 @@ function App() {
         params: { ip: vmIP, domain: targetDomain }
       });
       setCookies(res.data.cookies);
+      setAccessToken(res.data.access_token)
     } catch (error) {
       console.error('Failed to extract cookies:', error);
       alert('Error extracting cookies.');
@@ -65,7 +70,12 @@ function App() {
   };
 
   const downloadCookies = () => {
-    const blob = new Blob([JSON.stringify(cookies, null, 2)], {
+    const fileData = {
+      session_id: sessionId || pastSessionId,
+      access_token: accessToken || pastAccessToken,
+      cookies: cookies
+    };
+    const blob = new Blob([JSON.stringify(fileData, null, 2)], {
       type: 'application/json'
     });
     const url = URL.createObjectURL(blob);
@@ -73,7 +83,30 @@ function App() {
     a.href = url;
     a.download = 'cookies.json';
     a.click();
-    stopSession();
+    if (sessionId && vmIP) {
+      stopSession();
+      setTargetDomain('');
+    } else {
+      setCookies(null);
+      setPastSessionId('');
+      setPastAccessToken('');
+    }
+  };
+
+  const fetchPastCookies = async () => {
+    if (!pastSessionId || !pastAccessToken) return alert("Enter session ID and access token.");
+    try {
+      const res = await axios.get('http://localhost:8000/cookies', {
+        params: {
+          session_id: pastSessionId,
+          access_token: pastAccessToken
+        }
+      });
+      setCookies(res.data.cookies);
+    } catch (error) {
+      console.error('Failed to load past cookies:', error);
+      alert("Could not load cookies. Check session ID and token.");
+    }
   };
 
   return (
@@ -112,6 +145,7 @@ function App() {
                   placeholder="e.g. reddit.com" 
                   name="input" 
                   className="input"
+                  autoComplete="off"
                 />
               </div>
               <button onClick={extractCookies}>
@@ -119,8 +153,12 @@ function App() {
                 <span className="edge"></span>
                 <span className="front text">Extract Cookies</span>
               </button>
-              { cookies &&(
+              { cookies && accessToken &&(
                 <>
+                  <div className="session-info">
+                    <p><strong>Session ID:</strong> {sessionId}</p>
+                    <p><strong>Access Token:</strong> {accessToken}</p>
+                  </div>
                   <button onClick={downloadCookies}>
                     <span className="shadow"></span>
                     <span className="edge"></span>
@@ -143,6 +181,51 @@ function App() {
             />
           </div>
         </>
+      )}
+      { !loading && !sessionId && !vmIP && (
+        <div className="past-cookie-form-container">
+          <div className="past-cookie-form">
+            <h3>Retrieve Past Cookies</h3>
+            <div className="coolinput">
+              <label for="input" className="text">Session ID:</label>
+              <input 
+                type="text"
+                value={pastSessionId}
+                onChange={(e) => setPastSessionId(e.target.value)} 
+                name="input" 
+                className="input"
+                autoComplete="off"
+              />
+            </div>
+            <div className="coolinput">
+              <label for="input" className="text">Access Token:</label>
+              <input 
+                type="text"
+                value={pastAccessToken}
+                onChange={(e) => setPastAccessToken(e.target.value)} 
+                name="input" 
+                className="input"
+                autoComplete="off"
+              />
+            </div>
+            <button onClick={fetchPastCookies}>
+              <span className="shadow"></span>
+              <span className="edge"></span>
+              <span className="front text">Fetch Cookies</span>
+            </button>
+
+            {cookies && !sessionId && (
+              <div className="download-past">
+                <p>Cookies Fetched Successfully</p>
+                <button onClick={downloadCookies}>
+                  <span className="shadow"></span>
+                  <span className="edge"></span>
+                  <span className="front text">Download Past Cookies</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

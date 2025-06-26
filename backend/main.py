@@ -6,6 +6,7 @@ import time, socket, requests, json
 from pymongo import MongoClient
 from urllib.parse import quote_plus
 from cryptography.fernet import Fernet
+import secrets
 
 with open("config.json") as f:
     cfg = json.load(f)
@@ -99,14 +100,21 @@ def extract_cookies(ip: str, domain: str):
         cookies_str = json.dumps(cookies)
         encrypted = fernet.encrypt(cookies_str.encode())
 
+        access_token = secrets.token_urlsafe(32)
+        session_id = [k for k, v in session_ip_map.items() if v == ip][0]
+
         # Store in DB
         collection.insert_one({
             "domain": domain,
-            "session_id": [k for k, v in session_ip_map.items() if v == ip][0],
-            "encrypted_cookies": encrypted.decode()
+            "session_id": session_id,
+            "encrypted_cookies": encrypted.decode(),
+            "access_token": access_token
         })
         
-        return {"cookies": cookies}
+        return {
+            "access_token": access_token,
+            "cookies": cookies
+        }
     
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=504, detail=f"Failed to connect to VM: {str(e)}")
@@ -114,11 +122,14 @@ def extract_cookies(ip: str, domain: str):
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.get("/cookies")
-def get_cookies(session_id: str):
+def get_cookies(session_id: str, access_token: str):
     try:
-        doc = collection.find_one({"session_id": session_id})
+        doc = collection.find_one({
+            "session_id": session_id,
+            "access_token": access_token
+        })
         if not doc:
-            raise HTTPException(status_code=404, detail="No cookies found for this session.")
+            raise HTTPException(status_code=403, detail="Inavlid session ID or access token.")
 
         encrypted = doc["encrypted_cookies"].encode()
         decrypted = fernet.decrypt(encrypted).decode()
