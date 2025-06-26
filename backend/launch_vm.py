@@ -108,6 +108,10 @@ def launch_instance(session_id:str):
         display_name=f"session-{session_id[:8]}",
         availability_domain=cfg["availability_domain"],
         shape=cfg["shape"],
+        shape_config=oci.core.models.LaunchInstanceShapeConfigDetails(
+            ocpus=4,
+            memory_in_gbs=32
+        ),
         metadata={
             "ssh_authorized_keys":ssh_key,
             "user_data": user_data_encoded
