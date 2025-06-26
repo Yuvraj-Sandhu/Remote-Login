@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
@@ -8,6 +8,17 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [targetDomain, setTargetDomain] = useState('');
   const [cookies, setCookies] = useState(null);
+  const [loadingText, setLoadingText] = useState('Starting up VM...');
+
+  useEffect(() => {
+    if (loading && !vmIP) {
+      setLoadingText('Starting up VM...');
+      const timer = setTimeout(() => {
+        setLoadingText('Finalizing setup on the VM...');
+      }, 60000); /* 60 seconds*/
+      return () => clearTimeout(timer);
+    }
+  }, [loading, vmIP]);
 
   const startSession = async () => {
     setLoading(true);
@@ -62,6 +73,7 @@ function App() {
     a.href = url;
     a.download = 'cookies.json';
     a.click();
+    stopSession();
   };
 
   return (
@@ -79,6 +91,14 @@ function App() {
           <span className="front text">Stop Session</span>
         </button>
       </div>
+      { loading && !vmIP && (
+        <div className="loading">
+          <svg viewBox="25 25 50 50">
+            <circle r="20" cy="50" cx="50"></circle>
+          </svg>
+          <span className="loading-text">{loadingText}</span>
+        </div>
+      )}
       { vmIP &&(
         <>
           <div className="cookie-form-container">
@@ -100,11 +120,16 @@ function App() {
                 <span className="front text">Extract Cookies</span>
               </button>
               { cookies &&(
-                <button onClick={downloadCookies}>
-                  <span className="shadow"></span>
-                  <span className="edge"></span>
-                  <span className="front text">Download Cookies</span>
-                </button>
+                <>
+                  <button onClick={downloadCookies}>
+                    <span className="shadow"></span>
+                    <span className="edge"></span>
+                    <span className="front text">Download Cookies</span>
+                  </button>
+                  <div className="warning-text">
+                    Warning: The session will be terminated after downloading cookies.
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -113,8 +138,8 @@ function App() {
             <iframe
               src={`http://${vmIP}:6080/vnc.html`}
               title="Remote Desktop"
-              width="150%"
-              height="750"
+              width="78%"
+              height="730"
             />
           </div>
         </>

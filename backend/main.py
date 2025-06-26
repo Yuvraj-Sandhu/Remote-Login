@@ -2,8 +2,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import launch_vm
 from uuid import uuid4
-import time, socket, requests
+import time, socket, requests, json
+from pymongo import MongoClient
 
+with open("config.json") as f:
+    cfg = json.load(f)
 
 app = FastAPI()
 
@@ -14,6 +17,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+mongo_uri = cfg["mongo_uri"]
+client = MongoClient(mongo_uri)
+db = client["cookie_store"]
+collection = db["cookies"]
 
 session_ip_map = {}
 

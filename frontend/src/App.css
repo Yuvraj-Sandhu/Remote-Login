@@ -3,7 +3,6 @@
 }
 
 .container {
-  max-width: 900px;
   margin: 40px auto;
   padding: 20px;
   font-family: sans-serif;
@@ -118,6 +117,59 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 36px;
+  gap: 24px;
+}
+
+.loading svg {
+  width: 4em;
+  transform-origin: center;
+  animation: rotate4 2s linear infinite;
+}
+
+.loading circle {
+  fill: none;
+  stroke: rgba(0,165,207);
+  stroke-width: 3;
+  stroke-dasharray: 1, 200;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  animation: dash4 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate4 {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash4 {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+
+  50% {
+    stroke-dasharray: 90, 200;
+    stroke-dashoffset: -35px;
+  }
+
+  100% {
+    stroke-dashoffset: -125px;
+  }
+}
+
+.loading-text {
+  font-size: 1.4rem;
+  color: rgba(0,165,207);
+  font-weight: 500;
+  letter-spacing: 0.15rem;
+}
+
 .cookie-form-container {
   display: flex;
   justify-content: center;
@@ -149,6 +201,8 @@ button:disabled {
   position: static;
   width: 350px;
   margin-top: -10px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .coolinput label.text {
@@ -174,6 +228,10 @@ button:disabled {
 
 .coolinput input[type=text].input:focus {
   outline: none;
+}
+
+.warning-text {
+  color: red;
 }
 
 .iframe-container {
