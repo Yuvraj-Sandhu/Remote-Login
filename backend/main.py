@@ -4,6 +4,8 @@ import launch_vm
 from uuid import uuid4
 import time, socket, requests, json
 from pymongo import MongoClient
+from urllib.parse import quote_plus
+from cryptography.fernet import Fernet
 
 with open("config.json") as f:
     cfg = json.load(f)
@@ -18,10 +20,15 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-mongo_uri = cfg["mongo_uri"]
+username = quote_plus(cfg["mongo_username"])
+password = quote_plus(cfg["mongo_password"])
+
+mongo_uri = f"mongodb+srv://{username}:{password}@remote-login.x2yhnuf.mongodb.net/?retryWrites=true&w=majority&appName=Remote-login"
 client = MongoClient(mongo_uri)
 db = client["cookie_store"]
 collection = db["cookies"]
+
+fernet = Fernet(cfg["encryption_key"].encode())
 
 session_ip_map = {}
 
@@ -89,9 +96,35 @@ def extract_cookies(ip: str, domain: str):
         if not cookies:
             raise HTTPException(status_code=500, detail="No cookies found in response.")
         
+        cookies_str = json.dumps(cookies)
+        encrypted = fernet.encrypt(cookies_str.encode())
+
+        # Store in DB
+        collection.insert_one({
+            "domain": domain,
+            "session_id": [k for k, v in session_ip_map.items() if v == ip][0],
+            "encrypted_cookies": encrypted.decode()
+        })
+        
         return {"cookies": cookies}
     
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=504, detail=f"Failed to connect to VM: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/cookies")
+def get_cookies(session_id: str):
+    try:
+        doc = collection.find_one({"session_id": session_id})
+        if not doc:
+            raise HTTPException(status_code=404, detail="No cookies found for this session.")
+
+        encrypted = doc["encrypted_cookies"].encode()
+        decrypted = fernet.decrypt(encrypted).decode()
+        cookies = json.loads(decrypted)
+
+        return {"cookies": cookies}
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
