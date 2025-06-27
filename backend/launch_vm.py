@@ -109,11 +109,9 @@ def launch_instance(session_id:str, domain:str):
     ./utils/novnc_proxy --vnc 127.0.0.1:5900 --listen 0.0.0.0:6080 &
 
     # Write caddyfile
-    sudo bash -c "cat > /etc/caddy/Caddyfile" <<EOF
-    {domain} {{
+    sudo bash -c "echo '{domain} {{
         reverse_proxy localhost:6080
-    }}
-    EOF
+    }}' > /etc/caddy/Caddyfile"
 
     # Restart Caddy
     sudo systemctl restart caddy
