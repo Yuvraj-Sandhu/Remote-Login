@@ -37,7 +37,7 @@ def launch_instance(session_id:str, domain:str):
     sudo apt install caddy -y
 
     echo "Updating DuckDNS..."
-    curl "https://www.duckdns.org/update?domains={domain}&token={duckdns_token}&ip="
+    curl "https://www.duckdns.org/update?domains=remote-login&token={duckdns_token}&ip="
 
     # Start virtual display :0 using Xvfb
     Xvfb :1 -screen 0 1280x720x24 &

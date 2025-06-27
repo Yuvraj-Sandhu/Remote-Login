@@ -43,8 +43,8 @@ def wait_for_port(host, port, timeout=60):
             time.sleep(2)
     return False
 
-def wait_for_vnc_ready(ip, timeout=60):
-    url = f"https://{ip}:443/vnc.html"
+def wait_for_vnc_ready(domain, timeout=60):
+    url = f"https://{domain}/vnc.html"
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
@@ -60,21 +60,20 @@ def wait_for_vnc_ready(ip, timeout=60):
 def create_session():
     try:
         session_id = str(uuid4())
-        subdomain = f"session-{session_id[:8]}"
-        fqdn = f"{subdomain}.remote-login.duckdns.org"
-        public_ip = launch_vm.launch_instance(session_id, fqdn)
+        domain = "remote-login.duckdns.org"
+        public_ip = launch_vm.launch_instance(session_id, domain)
 
         session_ip_map[session_id] = public_ip
 
         #is_port_ready = wait_for_port(public_ip, 443, timeout=300)
         is_port_ready = True
-        is_vnc_ready = wait_for_vnc_ready(public_ip,timeout=300)
+        is_vnc_ready = wait_for_vnc_ready(domain,timeout=300)
         if not is_port_ready:
             raise HTTPException(status_code=504, detail="VM launched but port did not become ready in time.")
         if not is_vnc_ready:
             raise HTTPException(status_code=504, detail="VM launched but noVNC did not become ready in time.")
         
-        return{"session_id":session_id, "ip":public_ip, "url":f"https://{fqdn}/vnc.html"}
+        return{"session_id":session_id, "ip":public_ip, "url":f"https://{domain}/vnc.html"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
