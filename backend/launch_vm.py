@@ -43,11 +43,16 @@ def launch_instance(session_id:str):
 
     cp /usr/share/applications/google-chrome.desktop /home/ubuntu/Desktop/
     chmod +x /home/ubuntu/Desktop/google-chrome.desktop
-    chown ubuntu:ubuntu /home/ubuntu/Desktop/google-chrome.deskto
+    chown ubuntu:ubuntu /home/ubuntu/Desktop/google-chrome.desktop
     sudo chown -R ubuntu:ubuntu /home/ubuntu/chrome-profile
 
     # Clear Chrome profile to start fresh
     rm -rf /home/ubuntu/chrome-profile/*
+
+    # Generate self-signed SSL certificate for noVNC
+    mkdir -p /home/ubuntu/ssl
+    openssl req -x509 -nodes -newkey rsa:2048 -keyout /home/ubuntu/ssl/novnc.key -out /home/ubuntu/ssl/novnc.crt -days 365 -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+    chown -R ubuntu:ubuntu /home/ubuntu/ssl
 
     # Automatically starting google chrome
     env DISPLAY=:1 google-chrome \
@@ -93,7 +98,7 @@ def launch_instance(session_id:str):
 
     sleep 5
     cd /home/ubuntu/noVNC-master
-    ./utils/novnc_proxy --vnc 127.0.0.1:5900 --listen 0.0.0.0:6080 &
+    ./utils/novnc_proxy --vnc 127.0.0.1:5900 --listen 0.0.0.0:443 --cert /home/ubuntu/ssl/novnc.crt --key /home/ubuntu/ssl/novnc.key &
 
     cd /home/ubuntu
     export PATH=$PATH:/home/ubuntu/.local/bin

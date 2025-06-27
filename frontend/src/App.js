@@ -27,7 +27,7 @@ function App() {
   const startSession = async () => {
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:8000/session');
+      const res = await axios.post('https://remote-login.onrender.com/session');
       setSessionId(res.data.session_id);
       setVmIP(res.data.ip);
     } catch (error) {
@@ -42,7 +42,7 @@ function App() {
     if (!sessionId) return;
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:8000/session/${sessionId}`);
+      await axios.delete(`https://remote-login.onrender.com/session/${sessionId}`);
       setSessionId(null);
       setVmIP(null);
       setCookies(null);
@@ -58,7 +58,7 @@ function App() {
     if (!vmIP) return alert('Start session.')
     if (!targetDomain) return alert('Enter domain targer.');
     try {
-      const res = await axios.get(`http://localhost:8000/extract_cookies`, {
+      const res = await axios.get(`https://remote-login.onrender.com/extract_cookies`, {
         params: { ip: vmIP, domain: targetDomain }
       });
       setCookies(res.data.cookies);
@@ -96,7 +96,7 @@ function App() {
   const fetchPastCookies = async () => {
     if (!pastSessionId || !pastAccessToken) return alert("Enter session ID and access token.");
     try {
-      const res = await axios.get('http://localhost:8000/cookies', {
+      const res = await axios.get('https://remote-login.onrender.com/cookies', {
         params: {
           session_id: pastSessionId,
           access_token: pastAccessToken
@@ -174,7 +174,7 @@ function App() {
 
           <div className="iframe-container">
             <iframe
-              src={`http://${vmIP}:6080/vnc.html`}
+              src={`https://${vmIP}:443/vnc.html`}
               title="Remote Desktop"
               width="78%"
               height="730"

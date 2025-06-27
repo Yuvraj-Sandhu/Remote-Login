@@ -44,7 +44,7 @@ def wait_for_port(host, port, timeout=60):
     return False
 
 def wait_for_vnc_ready(ip, timeout=60):
-    url = f"http://{ip}:6080/vnc.html"
+    url = f"https://{ip}:443/vnc.html"
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
@@ -63,7 +63,7 @@ def create_session():
         public_ip = launch_vm.launch_instance(session_id)
         session_ip_map[session_id] = public_ip
 
-        #is_port_ready = wait_for_port(public_ip, 6080, timeout=300)
+        #is_port_ready = wait_for_port(public_ip, 443, timeout=300)
         is_port_ready = True
         is_vnc_ready = wait_for_vnc_ready(public_ip,timeout=300)
         if not is_port_ready:
@@ -71,7 +71,7 @@ def create_session():
         if not is_vnc_ready:
             raise HTTPException(status_code=504, detail="VM launched but noVNC did not become ready in time.")
         
-        return{"session_id":session_id, "ip":public_ip, "url":f"http://{public_ip}:6080/vnc.html"}
+        return{"session_id":session_id, "ip":public_ip, "url":f"https://{public_ip}:443/vnc.html"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
