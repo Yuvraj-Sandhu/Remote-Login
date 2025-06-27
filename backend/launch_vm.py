@@ -15,8 +15,6 @@ def launch_instance(session_id:str, domain:str):
     with open(cfg["ssh_key_path"]) as f:
         ssh_key = f.read()
 
-    duckdns_token = cfg["duckdns_token"]
-
     startup_script = f"""#!/bin/bash
     sudo iptables -F
     sudo iptables -X
@@ -46,7 +44,7 @@ def launch_instance(session_id:str, domain:str):
     env DISPLAY=:1 startlxde &
 
     # Wait for lxde to start
-    sleep 5
+    sleep 2
 
     # Ensure Desktop directory exists
     mkdir -p /home/ubuntu/Desktop
@@ -101,7 +99,7 @@ def launch_instance(session_id:str, domain:str):
     # Start x11vnc server with DISPLAY=:1
     env DISPLAY=:1 x11vnc -display :1 -forever -nopw &
 
-    sleep 5
+    sleep 2
     cd /home/ubuntu/noVNC-master
     ./utils/novnc_proxy --vnc 127.0.0.1:5900 --listen 0.0.0.0:6080 &
 

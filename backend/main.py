@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import launch_vm
 from uuid import uuid4
-import time, socket, requests, json
+import time, requests, json
 from pymongo import MongoClient
 from urllib.parse import quote_plus
 from cryptography.fernet import Fernet
@@ -34,8 +34,8 @@ fernet = Fernet(cfg["encryption_key"].encode())
 session_ip_map = {}
 session_record_map = {}
 
-def wait_for_vnc_ready(domain, timeout=60):
-    url = f"https://{domain}/vnc.html"
+def wait_for_vnc_ready(ip, timeout=60):
+    url = f"http://{ip}:6080/vnc.html"
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
@@ -82,7 +82,8 @@ def create_session():
         record_id = response.json()["result"]["id"]
         session_record_map[session_id] = record_id
 
-        is_vnc_ready = wait_for_vnc_ready(domain,timeout=300)
+        is_vnc_ready = wait_for_vnc_ready(public_ip,timeout=300)
+        time.sleep(5)
         if not is_vnc_ready:
             raise HTTPException(status_code=504, detail="VM launched but noVNC did not become ready in time.")
         
