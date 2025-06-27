@@ -30,11 +30,11 @@ def launch_instance(session_id:str, domain:str):
 
     # Install Caddy
     sudo apt update
-    sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
-    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo tee /etc/apt/trusted.gpg.d/caddy-stable.asc
-    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+    sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl gnupg lsb-release
+    curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    echo "deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/caddy-stable.list
     sudo apt update
-    sudo apt install caddy -y
+    sudo apt install -y caddy
 
     echo "Updating DuckDNS..."
     curl "https://www.duckdns.org/update?domains=remote-login&token={duckdns_token}&ip="
@@ -108,6 +108,7 @@ def launch_instance(session_id:str, domain:str):
     cd /home/ubuntu/noVNC-master
     ./utils/novnc_proxy --vnc 127.0.0.1:5900 --listen 0.0.0.0:6080 &
 
+    # Write caddyfile
     sudo bash -c "cat > /etc/caddy/Caddyfile" <<EOF
     {domain} {{
         reverse_proxy localhost:6080
