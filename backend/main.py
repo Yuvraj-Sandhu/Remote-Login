@@ -114,6 +114,7 @@ def extract_cookies(ip: str, domain: str):
         })
         
         return {
+            "session_id": session_id,
             "access_token": access_token,
             "cookies": cookies
         }

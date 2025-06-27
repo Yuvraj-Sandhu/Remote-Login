@@ -5,6 +5,7 @@ import './App.css';
 function App() {
   const [sessionId, setSessionId] = useState(null);
   const [vmIP, setVmIP] = useState(null);
+  const [url, setUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [targetDomain, setTargetDomain] = useState('');
   const [cookies, setCookies] = useState(null);
@@ -30,6 +31,7 @@ function App() {
       const res = await axios.post('https://remote-login.onrender.com/session');
       setSessionId(res.data.session_id);
       setVmIP(res.data.ip);
+      setUrl(res.data.url);
     } catch (error) {
       console.error('Failed to start session:', error);
       alert('Error starting session.');
@@ -45,6 +47,7 @@ function App() {
       await axios.delete(`https://remote-login.onrender.com/session/${sessionId}`);
       setSessionId(null);
       setVmIP(null);
+      setUrl(null);
       setCookies(null);
     } catch (error) {
       console.error('Failed to stop session:', error);
@@ -174,7 +177,7 @@ function App() {
 
           <div className="iframe-container">
             <iframe
-              src={`https://${vmIP}:443/vnc.html`}
+              src={`${url}`}
               title="Remote Desktop"
               width="78%"
               height="730"
