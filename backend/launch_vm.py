@@ -5,7 +5,7 @@ from base64 import b64encode
 with open("config.json") as f:
     cfg = json.load(f)
 
-oci_config = oci.config.from_file()
+oci_config = oci.config.from_file("/etc/secrets/oci_config")
 
 compute = oci.core.ComputeClient(oci_config)
 network = oci.core.VirtualNetworkClient(oci_config)
