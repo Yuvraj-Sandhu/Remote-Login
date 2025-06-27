@@ -15,7 +15,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://remotelogin.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -36,6 +36,19 @@ session_record_map = {}
 
 def wait_for_vnc_ready(ip, timeout=60):
     url = f"http://{ip}:6080/vnc.html"
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                return True
+        except requests.exceptions.RequestException:
+            pass
+        time.sleep(2)
+    return False
+
+def wait_for_domain_ready(domain, timeout=60):
+    url = f"http://{domain}/vnc.html"
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
@@ -83,9 +96,12 @@ def create_session():
         session_record_map[session_id] = record_id
 
         is_vnc_ready = wait_for_vnc_ready(public_ip,timeout=300)
-        time.sleep(15)
+        time.sleep(30)
+        is_domain_ready = wait_for_domain_ready(domain,timeout=60)
         if not is_vnc_ready:
             raise HTTPException(status_code=504, detail="VM launched but noVNC did not become ready in time.")
+        if not is_domain_ready:
+            raise HTTPException(status_code=504, detail="Domain did not ready in time.")
         
         return{
             "session_id":session_id, 

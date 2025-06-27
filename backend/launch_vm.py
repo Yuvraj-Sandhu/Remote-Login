@@ -115,6 +115,9 @@ def launch_instance(session_id:str, domain:str):
     export PATH=$PATH:/home/ubuntu/.local/bin
     export PYTHONPATH=$PYTHONPATH:/home/ubuntu/.local/lib/python3.10/site-packages
     nohup uvicorn fetch_cookies:app --host 0.0.0.0 --port 8080 > /home/ubuntu/cookie.log 2>&1 &
+
+    # AUTO-TERMINATE after 15 min
+    (sleep 900; sudo shutdown -h now) &
     """
 
     user_data_encoded = b64encode(startup_script.encode()).decode()
