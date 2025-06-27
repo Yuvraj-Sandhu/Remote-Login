@@ -83,7 +83,7 @@ def create_session():
         session_record_map[session_id] = record_id
 
         is_vnc_ready = wait_for_vnc_ready(public_ip,timeout=300)
-        time.sleep(5)
+        time.sleep(15)
         if not is_vnc_ready:
             raise HTTPException(status_code=504, detail="VM launched but noVNC did not become ready in time.")
         
