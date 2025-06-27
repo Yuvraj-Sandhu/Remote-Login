@@ -32,16 +32,7 @@ collection = db["cookies"]
 fernet = Fernet(cfg["encryption_key"].encode())
 
 session_ip_map = {}
-
-def wait_for_port(host, port, timeout=60):
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        try:
-            with socket.create_connection((host, port), timeout=10):
-                return True
-        except (ConnectionRefusedError, OSError):
-            time.sleep(2)
-    return False
+session_record_map = {}
 
 def wait_for_vnc_ready(domain, timeout=60):
     url = f"https://{domain}/vnc.html"
@@ -60,20 +51,46 @@ def wait_for_vnc_ready(domain, timeout=60):
 def create_session():
     try:
         session_id = str(uuid4())
-        domain = "remote-login.duckdns.org"
-        public_ip = launch_vm.launch_instance(session_id, domain)
+        subdomain = f"session-{session_id[:8]}"
+        domain = f"{subdomain}.remote-login.org"
 
+        public_ip = launch_vm.launch_instance(session_id, domain)
         session_ip_map[session_id] = public_ip
 
-        #is_port_ready = wait_for_port(public_ip, 443, timeout=300)
-        is_port_ready = True
+        # Create subdomain A record in Cloudflare
+        cf_token = cfg["cloudflare_token"]
+        zone_id = cfg["cloudflare_zone_id"]
+
+        headers = {
+            "Authorization": f"Bearer {cf_token}",
+            "Content-Type": "application/json"
+        }
+
+        data = {
+            "type": "A",
+            "name": subdomain,
+            "content": public_ip,
+            "ttl": 120,
+            "proxied": True
+        }
+
+        url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records"
+        response = requests.post(url, headers=headers, json=data)
+        if not response.ok:
+            raise HTTPException(status_code=500, detail=f"Cloudflare DNS create failed: {response.text}")
+
+        record_id = response.json()["result"]["id"]
+        session_record_map[session_id] = record_id
+
         is_vnc_ready = wait_for_vnc_ready(domain,timeout=300)
-        if not is_port_ready:
-            raise HTTPException(status_code=504, detail="VM launched but port did not become ready in time.")
         if not is_vnc_ready:
             raise HTTPException(status_code=504, detail="VM launched but noVNC did not become ready in time.")
         
-        return{"session_id":session_id, "ip":public_ip, "url":f"https://{domain}/vnc.html"}
+        return{
+            "session_id":session_id, 
+            "ip":public_ip, 
+            "url":f"https://{domain}/vnc.html"
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -83,6 +100,20 @@ def terminate_session(session_id:str):
     try:
         launch_vm.terminate_instance(session_id)
         session_ip_map.pop(session_id, None)
+
+        # Delete Cloudflare subdomain
+        cf_token = cfg["cloudflare_token"]
+        zone_id = cfg["cloudflare_zone_id"]
+
+        record_id = session_record_map.pop(session_id, None)
+        if record_id:
+            headers = {
+                "Authorization": f"Bearer {cf_token}",
+                "Content-Type": "application/json"
+            }
+            url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{record_id}"
+            requests.delete(url, headers=headers)
+
         return {"message": f"Session {session_id} terminated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
