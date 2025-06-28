@@ -1,5 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import launch_vm
 from uuid import uuid4
 import time, requests, json
@@ -7,6 +10,8 @@ from pymongo import MongoClient
 from urllib.parse import quote_plus
 from cryptography.fernet import Fernet
 import secrets
+import threading
+import slowapi
 
 with open("config.json") as f:
     cfg = json.load(f)
@@ -20,6 +25,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+# Setup slowapi limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 username = quote_plus(cfg["mongo_username"])
 password = quote_plus(cfg["mongo_password"])
@@ -60,7 +70,22 @@ def wait_for_domain_ready(domain, timeout=60):
         time.sleep(2)
     return False
 
+def auto_delete_subdomain(session_id, record_id):
+    time.sleep(15 * 60)
+    cf_token = cfg["cloudflare_token"]
+    zone_id = cfg["cloudflare_zone_id"]
+
+    record_id = session_record_map.pop(session_id, None)
+    if record_id:
+        headers = {
+            "Authorization": f"Bearer {cf_token}",
+            "Content-Type": "application/json"
+        }
+        url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{record_id}"
+        requests.delete(url, headers=headers)
+
 @app.post("/session")
+@limiter.limit("5/minute")
 def create_session():
     try:
         session_id = str(uuid4())
@@ -103,6 +128,8 @@ def create_session():
         if not is_domain_ready:
             raise HTTPException(status_code=504, detail="Domain did not ready in time.")
         
+        threading.Thread(target=auto_delete_subdomain, args=(session_id, record_id)).start()
+
         return{
             "session_id":session_id, 
             "ip":public_ip, 
@@ -113,6 +140,7 @@ def create_session():
     
 
 @app.delete("/session/{session_id}")
+@limiter.limit("5/minute")
 def terminate_session(session_id:str):
     try:
         launch_vm.terminate_instance(session_id)
@@ -136,6 +164,7 @@ def terminate_session(session_id:str):
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.get("/extract_cookies")
+@limiter.limit("10/minute")
 def extract_cookies(ip: str, domain: str):
     try:
         url = f"http://{ip}:8080/fetch_cookies?domain={domain}"
@@ -173,6 +202,7 @@ def extract_cookies(ip: str, domain: str):
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.get("/cookies")
+@limiter.limit("10/minute")
 def get_cookies(session_id: str, access_token: str):
     try:
         doc = collection.find_one({
