@@ -91,7 +91,6 @@ def launch_instance(session_id:str, domain:str):
     --no-default-browser-check \
     --password-store=basic \
     --remote-debugging-port=9222 \
-    --remote-debugging-address=0.0.0.0 \
     --window-size=1280,720 \
     --user-data-dir=/home/ubuntu/chrome-profile &
 
