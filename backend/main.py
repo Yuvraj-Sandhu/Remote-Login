@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -11,7 +11,6 @@ from urllib.parse import quote_plus
 from cryptography.fernet import Fernet
 import secrets
 import threading
-import slowapi
 
 with open("config.json") as f:
     cfg = json.load(f)
@@ -86,7 +85,7 @@ def auto_delete_subdomain(session_id, record_id):
 
 @app.post("/session")
 @limiter.limit("5/minute")
-def create_session():
+def create_session(request: Request):
     try:
         session_id = str(uuid4())
         subdomain = f"session-{session_id[:8]}"
@@ -141,7 +140,7 @@ def create_session():
 
 @app.delete("/session/{session_id}")
 @limiter.limit("5/minute")
-def terminate_session(session_id:str):
+def terminate_session(session_id:str, request: Request):
     try:
         launch_vm.terminate_instance(session_id)
         session_ip_map.pop(session_id, None)
@@ -165,7 +164,7 @@ def terminate_session(session_id:str):
     
 @app.get("/extract_cookies")
 @limiter.limit("10/minute")
-def extract_cookies(ip: str, domain: str):
+def extract_cookies(ip: str, domain: str, request: Request):
     try:
         url = f"http://{ip}:8080/fetch_cookies?domain={domain}"
         response = requests.get(url,timeout=15)
@@ -203,7 +202,7 @@ def extract_cookies(ip: str, domain: str):
     
 @app.get("/cookies")
 @limiter.limit("10/minute")
-def get_cookies(session_id: str, access_token: str):
+def get_cookies(session_id: str, access_token: str, request: Request):
     try:
         doc = collection.find_one({
             "session_id": session_id,
