@@ -69,8 +69,12 @@ def wait_for_domain_ready(domain, timeout=60):
         time.sleep(2)
     return False
 
-def auto_delete_subdomain(session_id, record_id):
+def auto_delete_VM_and_subdomain(session_id, record_id):
     time.sleep(15 * 60)
+
+    launch_vm.terminate_instance(session_id)
+    session_ip_map.pop(session_id, None)
+    
     cf_token = cfg["cloudflare_token"]
     zone_id = cfg["cloudflare_zone_id"]
 
@@ -127,7 +131,7 @@ def create_session(request: Request):
         if not is_domain_ready:
             raise HTTPException(status_code=504, detail="Domain did not ready in time.")
         
-        threading.Thread(target=auto_delete_subdomain, args=(session_id, record_id)).start()
+        threading.Thread(target=auto_delete_VM_and_subdomain, args=(session_id, record_id)).start()
 
         return{
             "session_id":session_id, 
