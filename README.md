@@ -1,10 +1,10 @@
 # Remote Login App
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Available-brightgreen)](https://remotelogin.vercel.app/)  
-[![Backend](https://img.shields.io/badge/Backend-FastAPI-blue)](https://fastapi.tiangolo.com/)  
-[![Frontend](https://img.shields.io/badge/Frontend-React%2018-blue)](https://reactjs.org/)  
-[![Oracle Cloud](https://img.shields.io/badge/Cloud-Oracle%20OCI-orange)](https://www.oracle.com/cloud/)  
-[![MongoDB Atlas](https://img.shields.io/badge/Database-MongoDB%20Atlas-green)](https://www.mongodb.com/cloud/atlas)  
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Available-brightgreen)](https://remotelogin.vercel.app/)
+[![Backend](https://img.shields.io/badge/Backend-FastAPI-blue)](https://fastapi.tiangolo.com/)
+[![Frontend](https://img.shields.io/badge/Frontend-React%2018-blue)](https://reactjs.org/)
+[![Oracle Cloud](https://img.shields.io/badge/Cloud-Oracle%20OCI-orange)](https://www.oracle.com/cloud/)
+[![MongoDB Atlas](https://img.shields.io/badge/Database-MongoDB%20Atlas-green)](https://www.mongodb.com/cloud/atlas)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > **Secure, ephemeral remote‑desktop sessions for cookie‑based authentication**  
@@ -94,7 +94,6 @@ Create a `config.json` in your backend root:
   "encryption_key": "<your‑fernet‑key‑here>",
   "cloudflare_token": "...",
   "cloudflare_zone_id": "...",
-  "duckdns_token": "...",
   "ssh_key_path": "~/.ssh/id_rsa.pub",
   "compartment_id": "...",
   "availability_domain": "...",
@@ -124,6 +123,38 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 Available at http://localhost:8000
+
+---
+
+## Project Structure
+
+```
+remote-login/
+│
+│
+├── backend/              # FastAPI backend
+│ ├── main.py             # Main FastAPI app
+│ ├── launch_vm.py        # Oracle Cloud VM orchestration
+│ ├── validate_flow.py    # Validation script
+│ └── requirements.txt    # Python dependencies
+│
+│
+├── frontend/           # React frontend
+│ ├── public/           # Static assets
+│ ├── src/              # Source code
+│ │ ├── App.js          # Main React component
+│ │ └── App.css         # Styling
+│ └── package.json      # Frontend dependencies
+│
+│
+├── vm/                 # VM-side code
+│ └── fetch_cookie.py   # Runs inside each VM instance
+│
+│
+├── LICENSE             # MIT License
+├── README.md           # Project documentation (this file)
+└── design_notes.md     # Design docs
+```
 
 ---
 
@@ -211,6 +242,22 @@ See [design_notes.pdf](design_notes.pdf) for deeper rationale, architecture, and
 - Restrict CORS to only React app’s origin.
 
 - Use least‑privilege IAM roles for OCI.
+
+---
+
+## Additional Resources
+
+- [React Documentation](https://react.dev/)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [MongoDB Atlas Docs](https://www.mongodb.com/docs/atlas/)
+- [Oracle Cloud Infrastructure Docs](https://docs.oracle.com/en-us/iaas/Content/home.htm)
+- [Cloudflare API Docs](https://developers.cloudflare.com/api/)
+- [noVNC Docs](https://github.com/novnc/noVNC)
+- [Caddy Server Docs](https://caddyserver.com/docs/)
+- [Cryptography Python Package](https://cryptography.io/en/latest/)
+- [Uvicorn Docs](https://www.uvicorn.org/)
+
+---
 
 ## License
 
