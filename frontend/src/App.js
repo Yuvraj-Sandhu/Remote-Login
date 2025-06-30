@@ -366,14 +366,14 @@ function App() {
       {/* ================================================================ */}
       <div className="buttons">
         {/* Start Session Button */}
-        <button onClick={startSession} disabled={loading || sessionId}>   // Disabled during loading or if session exists
+        <button onClick={startSession} disabled={loading || sessionId}>   {/* Disabled during loading or if session exists */}
           <span className="shadow"></span>
           <span className="edge"></span>
           <span className="front text">Start Session</span>
         </button>
 
         {/* Stop Session Button */}
-        <button onClick={stopSession} disabled={loading || !sessionId}>   // Disabled during loading or if no session
+        <button onClick={stopSession} disabled={loading || !sessionId}>   {/* // Disabled during loading or if no session */}
           <span className="shadow"></span>
           <span className="edge"></span>
           <span className="front text">Stop Session</span>
