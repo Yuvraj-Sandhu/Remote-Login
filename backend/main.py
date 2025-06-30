@@ -1,5 +1,5 @@
 """
-                              Remote Session Management API
+                                    Remote-Login Backend API
 ===================================================================================================
 
 A FastAPI backend service for managing ephemeral cloud-based browser sessions with 
