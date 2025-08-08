@@ -321,10 +321,10 @@ def launch_instance(session_id:str, domain:str):
 
         # Hardware resource allocation (Only for Flex shapes)
         # REMOVE if not using a Flex shape
-        shape_config=oci.core.models.LaunchInstanceShapeConfigDetails(
-            ocpus=4,
-            memory_in_gbs=32
-        ),
+        # shape_config=oci.core.models.LaunchInstanceShapeConfigDetails(
+        #     ocpus=4,
+        #     memory_in_gbs=32
+        # ),
 
         # Instance metadata and initialization
         metadata={
